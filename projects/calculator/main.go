@@ -22,11 +22,12 @@ func calculator(firstChan <-chan int, secondChan <-chan int, stopChan <-chan str
 }
 
 func main() {
-	var chanNumb int
+	var chanNumb string
 	fmt.Println("В какой chan запишем значение?\n1. firstChan (значение будет возведено в квадрат)\n2. secondChan (значение будет умножено на 3)\n3. stopChan (никакое значение не будет возращено, и функция calculator() завершится)")
 repeat:
 	fmt.Print("Вберите номер chan'а (без точки): ")
-	if _, err := fmt.Scan(&chanNumb); err != nil {
+	fmt.Scan(&chanNumb)
+	if _, err := strconv.Atoi(chanNumb); err != nil {
 		fmt.Println("Было введено нечисловое значение. Пожалуйста, повторите ввод!")
 		goto repeat
 	}
@@ -36,7 +37,7 @@ repeat:
 	SChan := make(chan int, 1)
 	STChan := make(chan struct{}, 1)
 
-	if chanNumb == 1 {
+	if val, _ := strconv.Atoi(chanNumb); val == 1 {
 		var n string
 	rp1:
 		fmt.Print("Введите числовое значение: ")
@@ -51,7 +52,7 @@ repeat:
 				fChan <- val
 			}()
 		}
-	} else if chanNumb == 2 {
+	} else if val, _ := strconv.Atoi(chanNumb); val == 2 {
 		var n string
 	rp2:
 		fmt.Print("Введите числовое значение: ")
@@ -66,7 +67,7 @@ repeat:
 				SChan <- val
 			}()
 		}
-	} else if chanNumb == 3 {
+	} else if val, _ := strconv.Atoi(chanNumb); val == 3 {
 		syncer.Add(1)
 		go func() {
 			syncer.Done()
