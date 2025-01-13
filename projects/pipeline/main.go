@@ -2,7 +2,8 @@ package main
 
 import (
 	"fmt"
-	"strconv"
+	"sync"
+	"unicode"
 )
 
 func removeDuplicates(inputStream chan string, outputStream chan string) {
@@ -23,25 +24,39 @@ func removeDuplicates(inputStream chan string, outputStream chan string) {
 
 func main() {
 	fmt.Println("/* Эта программа убирает повторения цифр подряд из введённой последовательнсти цифр */")
-	inChan := make(chan string)
-	outChan := make(chan string)
-	go removeDuplicates(inChan, outChan)
 
 	var numQueue string
-repeat:
-	fmt.Print("Введите последовальность чисел: ")
-	fmt.Scan(&numQueue)
-	if _, err := strconv.Atoi(numQueue); err != nil {
-		fmt.Println("Было введено то, что не является последовательностью чисел. Пожалуйста, повторите ввод!")
-		goto repeat
-	} else {
-		go func() {
-			defer close(inChan)
-			for _, num := range numQueue {
-				inChan <- string(num)
+	errorKey := true
+	for errorKey == true {
+		fmt.Print("Введите последовальность чисел: ")
+		fmt.Scan(&numQueue)
+		for i := 0; i < len(numQueue); i++ {
+			if unicode.IsDigit(rune(numQueue[i])) == true {
+				errorKey = false
+			} else {
+				errorKey = true
 			}
-		}()
+		}
+		if errorKey == true {
+			fmt.Println("Было введено то, что не является последовательностью чисел. Пожалуйста, повторите ввод!")
+		}
 	}
+
+	inChan := make(chan string, len(numQueue))
+	outChan := make(chan string, len(numQueue))
+
+	syncerFirst := new(sync.WaitGroup)
+	syncerFirst.Add(1)
+	go func() {
+		defer close(inChan)
+		defer syncerFirst.Done()
+		for _, num := range numQueue {
+			inChan <- string(num)
+		}
+	}()
+	syncerFirst.Wait()
+
+	go removeDuplicates(inChan, outChan)
 
 	fmt.Print("Результат: ")
 	for num := range outChan {
